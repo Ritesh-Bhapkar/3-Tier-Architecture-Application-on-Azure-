@@ -25,6 +25,14 @@ module security './modules/security.bicep' = {
   }
 }
 
+module registry './modules/registry.bicep' = {
+  name: 'registry-module'
+  params: {
+    location: location
+    tags: commonTags
+  }
+}
+
 module database './modules/database.bicep' = {
   name: 'database-module'
   params: {
@@ -57,5 +65,9 @@ module apps './modules/apps.bicep' = {
     dbHost: database.outputs.psqlHost
     managedIdentityId: security.outputs.identityId
     managedIdentityClientId: security.outputs.identityClientId
+    acrName: registry.outputs.acrName 
+    // New parameters passed to bypass role assignment issues
+    acrUserName: registry.outputs.acrUserName
+    acrPassword: registry.outputs.acrPassword
   }
 }

@@ -56,7 +56,14 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
   tags: tags
   properties: { 
     groupShortName: 'db-alert'
-    enabled: true 
+    enabled: true
+    emailReceivers:[
+      {
+      name: 'RiteshEmail'
+      emailAddress: 'ritesh.bhapkar@costrategix.com' // Updated to your email
+      useCommonAlertSchema: true
+      }
+    ]
   }
 }
 
