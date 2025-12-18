@@ -1,15 +1,16 @@
 trigger:
-  - none
+  - master  # Change from 'none' to 'master' if you want it to run on push
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # 1. Your existing service connection
-  dockerRegistryServiceConnection: 'gbp-sc-ritesh'
-  
-  # 2. YOUR UPDATED ACR LOGIN SERVER
-  acrName: 'acr3tierfylxnlaj2ey4a.azurecr.io' 
+  # Using your existing ARM service connection
+  azureServiceConnection: 'gbp-sc-ritesh'
+  # Just the name for login command
+  acrName: 'acr3tierfylxnlaj2ey4a' 
+  # Full login server for tagging
+  acrLoginServer: 'acr3tierfylxnlaj2ey4a.azurecr.io'
   
   backendImage: 'todo-backend'
   frontendImage: 'todo-frontend'
@@ -21,28 +22,32 @@ stages:
   jobs:
   - job: DockerBuild
     steps:
-    - checkout: self # Ensures files are downloaded to the agent
+    - checkout: self
 
-    # Build and Push Backend
-    - task: Docker@2
-      displayName: 'Build and Push Backend'
+    - task: AzureCLI@2
+      displayName: 'Build and Push via Azure CLI'
       inputs:
-        command: 'buildAndPush'
-        containerRegistry: $(dockerRegistryServiceConnection)
-        repository: $(backendImage)
-        Dockerfile: '**/backend/Dockerfile'
-        tags: |
-          $(tag)
-          latest
-
-    # Build and Push Frontend
-    - task: Docker@2
-      displayName: 'Build and Push Frontend'
-      inputs:
-        command: 'buildAndPush'
-        containerRegistry: $(dockerRegistryServiceConnection)
-        repository: $(frontendImage)
-        Dockerfile: '**/frontend/Dockerfile'
-        tags: |
-          $(tag)
-          latest
+        azureSubscription: $(azureServiceConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # 1. Log in to your ACR using the ARM connection context
+          az acr login --name $(acrName)
+          
+          # 2. Build and Push Backend
+          # Notice the path: pern-todo-app/backend/Dockerfile
+          docker build -t $(acrLoginServer)/$(backendImage):$(tag) \
+                       -t $(acrLoginServer)/$(backendImage):latest \
+                       -f pern-todo-app/backend/Dockerfile pern-todo-app/backend
+          
+          docker push $(acrLoginServer)/$(backendImage):$(tag)
+          docker push $(acrLoginServer)/$(backendImage):latest
+          
+          # 3. Build and Push Frontend
+          # Notice the path: pern-todo-app/frontend/Dockerfile
+          docker build -t $(acrLoginServer)/$(frontendImage):$(tag) \
+                       -t $(acrLoginServer)/$(frontendImage):latest \
+                       -f pern-todo-app/frontend/Dockerfile pern-todo-app/frontend
+          
+          docker push $(acrLoginServer)/$(frontendImage):$(tag)
+          docker push $(acrLoginServer)/$(frontendImage):latest
