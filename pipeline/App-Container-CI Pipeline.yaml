@@ -8,7 +8,7 @@ variables:
   # Using your existing ARM service connection
   azureServiceConnection: 'gbp-sc-ritesh'
   # Just the name for login command
-  acrName: 'acr3tierfylxnlaj2ey4a' 
+  acrName: 'acr3tierfylxnlaj2ey4a'
   # Full login server for tagging
   acrLoginServer: 'acr3tierfylxnlaj2ey4a.azurecr.io'
   
