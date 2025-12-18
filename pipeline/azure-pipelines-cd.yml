@@ -1,0 +1,41 @@
+trigger: none # Manually triggered or follows CI
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureServiceConnection: 'gbp-sc-ritesh'
+  resourceGroupName: 'gbp-devops-ritesh'
+  acrName: 'acr3tierfylxnlaj2ey4a'
+  # Change this to the Build ID from your successful CI run (e.g., 4343)
+  imageTag: '4343' 
+
+stages:
+- stage: DeployToProduction
+  displayName: 'Deploy to Azure Container Apps'
+  jobs:
+  - job: Deploy
+    steps:
+    # 1. Deploy Backend Container
+    - task: AzureContainerApps@1
+      displayName: 'Deploy Backend App'
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        resourceGroup: $(resourceGroupName)
+        containerAppName: 'aca-api' # Must match your Bicep name
+        imageToDeploy: '$(acrName).azurecr.io/todo-backend:$(imageTag)'
+        containerAppEnvironment: 'aca-env-3tier' # Must match your Bicep name
+
+    # 2. Deploy Frontend Container 
+    # (Includes the API URL so the React app knows where to send requests)
+    - task: AzureContainerApps@1
+      displayName: 'Deploy Frontend App'
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        resourceGroup: $(resourceGroupName)
+        containerAppName: 'aca-frontend' # Must match your Bicep name
+        imageToDeploy: '$(acrName).azurecr.io/todo-frontend:$(imageTag)'
+        containerAppEnvironment: 'aca-env-3tier'
+        # Injects the backend URL into the frontend
+        envVars: |
+          VITE_API_URL=https://aca-api.internal.calmsky-ce0af07e.westus2.azurecontainerapps.io
