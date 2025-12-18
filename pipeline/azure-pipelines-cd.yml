@@ -8,7 +8,7 @@ variables:
   resourceGroupName: 'gbp-devops-ritesh'
   acrName: 'acr3tierfylxnlaj2ey4a'
   # Change this to the Build ID from your successful CI run (e.g., 4343)
-  imageTag: '4343' 
+  imageTag: '4352' 
 
 stages:
 - stage: DeployToProduction
@@ -38,4 +38,4 @@ stages:
         containerAppEnvironment: 'aca-env-3tier'
         # Injects the backend URL into the frontend
         envVars: |
-          VITE_API_URL=https://aca-api.internal.calmsky-ce0af07e.westus2.azurecontainerapps.io
+          VITE_API_URL=https://aca-api.internal.lemonpond-75660848.westus2.azurecontainerapps.io
