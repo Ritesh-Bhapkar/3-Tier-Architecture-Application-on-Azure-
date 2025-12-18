@@ -1,0 +1,36 @@
+trigger:
+  - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureServiceConnection: 'gbp-sc-ritesh'
+  resourceGroupName: 'gbp-devops-ritesh'
+  location: 'eastus'
+  templateFile: 'infra/main.bicep'
+
+stages:
+- stage: DeployInfrastructure
+  displayName: 'Infrastructure Deployment'
+  jobs:
+  - job: BicepDeploy
+    steps:
+    # --- ADD THIS STEP ---
+    - checkout: self
+      displayName: 'Download Repository Files'
+    # ---------------------
+
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy Bicep with Secrets'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: $(azureServiceConnection)
+        subscriptionId: 'aca42f90-33f4-4476-875d-feb34fe201cb'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(resourceGroupName)
+        location: $(location)
+        templateLocation: 'Linked artifact'
+        csmFile: $(templateFile)
+        deploymentMode: 'Incremental'
+        overrideParameters: '-dbAdminPassword $(dbPassword)'
