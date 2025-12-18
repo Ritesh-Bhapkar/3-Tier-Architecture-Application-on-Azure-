@@ -25,7 +25,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
       activeRevisionsMode: 'Single'
       ingress: { 
         external: false 
-        targetPort: 8080 
+        targetPort: 5000 
         transport: 'auto'
       }
       // Store ACR password as a secret in ACA
@@ -101,7 +101,9 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         name: 'frontend'
         image: frontendImage
         env: [
-          { name: 'API_URL', value: 'https://${apiApp.properties.configuration.ingress.fqdn}' }
+          { 
+            name: 'VITE_API_URL' // Change from 'API_URL' to 'VITE_API_URL'
+            value: 'https://${apiApp.properties.configuration.ingress.fqdn}' }
         ]
         resources: {
           cpu: json('0.25')
