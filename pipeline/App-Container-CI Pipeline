@@ -1,0 +1,48 @@
+trigger:
+  - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # 1. Your existing service connection
+  dockerRegistryServiceConnection: 'gbp-sc-ritesh'
+  
+  # 2. YOUR UPDATED ACR LOGIN SERVER
+  acrName: 'acr3tierfylxnlaj2ey4a.azurecr.io' 
+  
+  backendImage: 'todo-backend'
+  frontendImage: 'todo-frontend'
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: BuildAndPush
+  displayName: 'Build and Push Stage'
+  jobs:
+  - job: DockerBuild
+    steps:
+    - checkout: self # Ensures files are downloaded to the agent
+
+    # Build and Push Backend
+    - task: Docker@2
+      displayName: 'Build and Push Backend'
+      inputs:
+        command: 'buildAndPush'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: $(backendImage)
+        Dockerfile: '**/backend/Dockerfile'
+        tags: |
+          $(tag)
+          latest
+
+    # Build and Push Frontend
+    - task: Docker@2
+      displayName: 'Build and Push Frontend'
+      inputs:
+        command: 'buildAndPush'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: $(frontendImage)
+        Dockerfile: '**/frontend/Dockerfile'
+        tags: |
+          $(tag)
+          latest
