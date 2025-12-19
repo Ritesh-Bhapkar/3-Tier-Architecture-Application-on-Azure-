@@ -1,9 +1,15 @@
-param location string
-param tags object
+param location string = resourceGroup().location
+param tags object = {}
 param environmentId string
 param apiImage string
 param frontendImage string
 param dbHost string
+// Automated DB Params
+param dbUser string
+@secure()
+param dbPassword string
+param dbName string = 'postgres'
+
 param managedIdentityId string
 param managedIdentityClientId string
 param acrName string
@@ -24,15 +30,13 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        external: false // Internal only as requested
-        targetPort: 5000 // Matches your Node.js code
+        external: false 
+        targetPort: 5000 
         transport: 'auto'
       }
       secrets: [
-        {
-          name: 'acr-password'
-          value: acrPassword
-        }
+        { name: 'acr-password', value: acrPassword }
+        { name: 'db-password', value: dbPassword }
       ]
       registries: [
         {
@@ -48,22 +52,14 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         image: apiImage
         env: [
           { name: 'DB_HOST', value: dbHost }
-          { name: 'AZURE_CLIENT_ID', value: managedIdentityClientId }
-          { name: 'PORT', value: '5000' } // Explicitly tell the code to use 5000
-          { 
-            name: 'FRONTEND_URL' 
-            value: 'https://aca-frontend.${location}.azurecontainerapps.io' // Needed for CORS in index.js
-          }
+          { name: 'DB_USER', value: dbUser }
+          { name: 'DB_PASSWORD', secretRef: 'db-password' }
+          { name: 'DB_NAME', value: dbName }
+          { name: 'PORT', value: '5000' }
+          { name: 'FRONTEND_URL', value: 'https://aca-frontend.${location}.azurecontainerapps.io' }
         ]
-        resources: {
-          cpu: json('0.25')
-          memory: '0.5Gi'
-        }
+        resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
-      scale: {
-        minReplicas: 0
-        maxReplicas: 3
-      }
     }
   }
 }
@@ -80,17 +76,8 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
     managedEnvironmentId: environmentId
     configuration: {
       activeRevisionsMode: 'Single'
-      ingress: { 
-        external: true 
-        targetPort: 80 
-        transport: 'auto'
-      }
-      secrets: [
-        {
-          name: 'acr-password'
-          value: acrPassword
-        }
-      ]
+      ingress: { external: true, targetPort: 80, transport: 'auto' }
+      secrets: [{ name: 'acr-password', value: acrPassword }]
       registries: [
         {
           server: '${acrName}.azurecr.io'
@@ -105,19 +92,13 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         image: frontendImage
         env: [
           { 
-            name: 'VITE_API_URL' // Prefix required for Vite to access it in the browser
-            value: 'https://${apiApp.properties.configuration.ingress.fqdn}' // Internal URL of the backend
+            name: 'VITE_API_URL' 
+            // AUTOMATION: Grabs internal FQDN + Port automatically
+            value: 'https://${apiApp.properties.configuration.ingress.fqdn}:5000' 
           }
         ]
-        resources: {
-          cpu: json('0.25')
-          memory: '0.5Gi'
-        }
+        resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
-      scale: {
-        minReplicas: 0
-        maxReplicas: 3
-      }
     }
   }
 }
