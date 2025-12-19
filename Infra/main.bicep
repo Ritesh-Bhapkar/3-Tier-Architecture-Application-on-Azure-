@@ -11,10 +11,11 @@ param dbUser string = 'psqladmin'
 @secure()
 param dbPassword string
 @secure()
-param acrPassword string // Added this line to fix the error
+param acrPassword string 
 
-param apiImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-param frontendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+// UPDATED: Pointing to your ACR by default instead of Hello World
+param apiImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-backend:latest'
+param frontendImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-frontend:latest'
 
 var commonTags = resourceGroup().tags
 
@@ -78,6 +79,6 @@ module apps './modules/apps.bicep' = {
     managedIdentityClientId: security.outputs.identityClientId
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
-    acrPassword: acrPassword // Now this has a matching param at the top
+    acrPassword: acrPassword 
   }
 }
