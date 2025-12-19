@@ -4,10 +4,8 @@ trigger:
       - master
   paths:
     include:
-      - pern-todo-app/* # Trigger only for app code changes
-      - pipeline/App-Container-CI Pipeline.yaml # Trigger if this YAML changes
-  # Keep it as 'none' if you want to stop all automatic triggers entirely
-  # - none 
+      - pern-todo-app/*
+      - pipeline/App-Container-CI Pipeline.yaml
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -19,6 +17,8 @@ variables:
   backendImage: 'todo-backend'
   frontendImage: 'todo-frontend'
   tag: '$(Build.BuildId)'
+  # The exact internal URL of your backend
+  backendUrl: 'https://aca-api.internal.gentlehill-16fd5eda.westus2.azurecontainerapps.io:5000'
 
 stages:
 - stage: BuildAndPush
@@ -37,7 +37,7 @@ stages:
         inlineScript: |
           az acr login --name $(acrName)
           
-          # Build and Push Backend
+          # 1. Build and Push Backend
           docker build -t $(acrLoginServer)/$(backendImage):$(tag) \
                        -t $(acrLoginServer)/$(backendImage):latest \
                        -f pern-todo-app/backend/Dockerfile pern-todo-app/backend
@@ -45,9 +45,10 @@ stages:
           docker push $(acrLoginServer)/$(backendImage):$(tag)
           docker push $(acrLoginServer)/$(backendImage):latest
           
-          # Build and Push Frontend
+          # 2. Build and Push Frontend (Crucial FIX: Added --build-arg)
           docker build -t $(acrLoginServer)/$(frontendImage):$(tag) \
                        -t $(acrLoginServer)/$(frontendImage):latest \
+                       --build-arg VITE_API_URL=$(backendUrl) \
                        -f pern-todo-app/frontend/Dockerfile pern-todo-app/frontend
           
           docker push $(acrLoginServer)/$(frontendImage):$(tag)
