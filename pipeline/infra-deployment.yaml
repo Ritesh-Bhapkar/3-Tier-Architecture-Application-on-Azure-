@@ -1,6 +1,12 @@
-trigger:
-  - none
+trigger: 
+  branches:
+    include:
+      - master
 
+  paths:
+    include:
+      - Infra/*
+      - pipeline/infra-deployment.yaml
 pool:
   vmImage: 'ubuntu-latest'
 
