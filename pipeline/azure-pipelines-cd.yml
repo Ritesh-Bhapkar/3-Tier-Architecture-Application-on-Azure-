@@ -38,4 +38,4 @@ stages:
         containerAppEnvironment: 'aca-env-3tier'
         # Injects the backend URL into the frontend
         envVars: |
-          VITE_API_URL=https://aca-api.internal.proudwave-f6836dda.westus2.azurecontainerapps.io.5000
+          VITE_API_URL=https://aca-api.internal.gentlehill-16fd5eda.westus2.azurecontainerapps.io:5000
