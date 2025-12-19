@@ -7,9 +7,9 @@ param dbHost string
 param managedIdentityId string
 param managedIdentityClientId string
 param acrName string
-param acrUserName string // New: ACR Admin Username
+param acrUserName string 
 @secure()
-param acrPassword string // New: ACR Admin Password
+param acrPassword string 
 
 resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'aca-api'
@@ -24,18 +24,16 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        external: false 
-        targetPort: 5000 
+        external: false // Internal only as requested
+        targetPort: 5000 // Matches your Node.js code
         transport: 'auto'
       }
-      // Store ACR password as a secret in ACA
       secrets: [
         {
           name: 'acr-password'
           value: acrPassword
         }
       ]
-      // Use credentials instead of Identity to bypass permission issues
       registries: [
         {
           server: '${acrName}.azurecr.io'
@@ -51,6 +49,11 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         env: [
           { name: 'DB_HOST', value: dbHost }
           { name: 'AZURE_CLIENT_ID', value: managedIdentityClientId }
+          { name: 'PORT', value: '5000' } // Explicitly tell the code to use 5000
+          { 
+            name: 'FRONTEND_URL' 
+            value: 'https://aca-frontend.${location}.azurecontainerapps.io' // Needed for CORS in index.js
+          }
         ]
         resources: {
           cpu: json('0.25')
@@ -102,8 +105,9 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         image: frontendImage
         env: [
           { 
-            name: 'VITE_API_URL' // Change from 'API_URL' to 'VITE_API_URL'
-            value: 'https://${apiApp.properties.configuration.ingress.fqdn}' }
+            name: 'VITE_API_URL' // Prefix required for Vite to access it in the browser
+            value: 'https://${apiApp.properties.configuration.ingress.fqdn}' // Internal URL of the backend
+          }
         ]
         resources: {
           cpu: json('0.25')
