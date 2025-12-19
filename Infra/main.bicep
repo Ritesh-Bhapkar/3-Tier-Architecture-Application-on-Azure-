@@ -2,8 +2,15 @@ targetScope = 'resourceGroup'
 
 param location string = resourceGroup().location
 param dbAdminLogin string = 'psqladmin'
+
 @secure()
 param dbAdminPassword string
+
+// ADDED: Parameters to catch values from the pipeline
+param dbUser string = 'psqladmin'
+@secure()
+param dbPassword string
+
 param apiImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 param frontendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
@@ -63,10 +70,12 @@ module apps './modules/apps.bicep' = {
     apiImage: apiImage
     frontendImage: frontendImage
     dbHost: database.outputs.psqlHost
+    // FIXED: Passing the missing database credentials
+    dbUser: dbUser
+    dbPassword: dbPassword
     managedIdentityId: security.outputs.identityId
     managedIdentityClientId: security.outputs.identityClientId
     acrName: registry.outputs.acrName 
-    // New parameters passed to bypass role assignment issues
     acrUserName: registry.outputs.acrUserName
     acrPassword: registry.outputs.acrPassword
   }
