@@ -6,10 +6,12 @@ param dbAdminLogin string = 'psqladmin'
 @secure()
 param dbAdminPassword string
 
-// ADDED: Parameters to catch values from the pipeline
+// FIXED: Parameters to catch values from the pipeline
 param dbUser string = 'psqladmin'
 @secure()
 param dbPassword string
+@secure()
+param acrPassword string // Added this line to fix the error
 
 param apiImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 param frontendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
@@ -70,13 +72,12 @@ module apps './modules/apps.bicep' = {
     apiImage: apiImage
     frontendImage: frontendImage
     dbHost: database.outputs.psqlHost
-    // FIXED: Passing the missing database credentials
     dbUser: dbUser
     dbPassword: dbPassword
     managedIdentityId: security.outputs.identityId
     managedIdentityClientId: security.outputs.identityClientId
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
-    acrPassword: registry.outputs.acrPassword
+    acrPassword: acrPassword // Now this has a matching param at the top
   }
 }
