@@ -43,6 +43,7 @@ stages:
         deploymentMode: 'Incremental'
         # FIXED: Removed hardcoded dbHost. Bicep will detect it automatically.
         overrideParameters: >
-          -dbUser "$(dbUser)"
+          -dbAdminPassword "$(dbPassword)"
           -dbPassword "$(dbPassword)"
+          -dbUser "psqladmin"
           -acrPassword "$(acrPassword)"
