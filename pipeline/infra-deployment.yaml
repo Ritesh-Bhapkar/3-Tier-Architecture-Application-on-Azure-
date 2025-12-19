@@ -2,11 +2,11 @@ trigger:
   branches:
     include:
       - master
-
   paths:
     include:
       - Infra/*
       - pipeline/infra-deployment.yaml
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -15,6 +15,10 @@ variables:
   resourceGroupName: 'gbp-devops-ritesh'
   location: 'eastus'
   templateFile: 'Infra/main.bicep'
+  # Make sure these are defined in your Pipeline Library/Variables!
+  # dbUser: 'psqladmin'
+  # dbPassword: 'your_secret_password'
+  # acrPassword: 'your_acr_secret'
 
 stages:
 - stage: DeployInfrastructure
@@ -22,13 +26,11 @@ stages:
   jobs:
   - job: BicepDeploy
     steps:
-    # --- ADD THIS STEP ---
     - checkout: self
       displayName: 'Download Repository Files'
-    # ---------------------
 
     - task: AzureResourceManagerTemplateDeployment@3
-      displayName: 'Deploy Bicep with Secrets'
+      displayName: 'Deploy Bicep with Automation'
       inputs:
         deploymentScope: 'Resource Group'
         azureResourceManagerConnection: $(azureServiceConnection)
@@ -39,4 +41,8 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: $(templateFile)
         deploymentMode: 'Incremental'
-        overrideParameters: '-dbAdminPassword $(dbPassword)'
+        # FIXED: Removed hardcoded dbHost. Bicep will detect it automatically.
+        overrideParameters: >
+          -dbUser "$(dbUser)"
+          -dbPassword "$(dbPassword)"
+          -acrPassword "$(acrPassword)"
