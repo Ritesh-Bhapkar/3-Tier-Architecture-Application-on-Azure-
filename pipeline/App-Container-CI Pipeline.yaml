@@ -1,17 +1,21 @@
 trigger:
-  - master  # Change from 'none' to 'master' if you want it to run on push
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - pern-todo-app/* # Trigger only for app code changes
+      - pipeline/App-Container-CI Pipeline.yaml # Trigger if this YAML changes
+  # Keep it as 'none' if you want to stop all automatic triggers entirely
+  # - none 
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # Using your existing ARM service connection
   azureServiceConnection: 'gbp-sc-ritesh'
-  # Just the name for login command
   acrName: 'acr3tierfylxnlaj2ey4a'
-  # Full login server for tagging
   acrLoginServer: 'acr3tierfylxnlaj2ey4a.azurecr.io'
-  
   backendImage: 'todo-backend'
   frontendImage: 'todo-frontend'
   tag: '$(Build.BuildId)'
@@ -31,11 +35,9 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          # 1. Log in to your ACR using the ARM connection context
           az acr login --name $(acrName)
           
-          # 2. Build and Push Backend
-          # Notice the path: pern-todo-app/backend/Dockerfile
+          # Build and Push Backend
           docker build -t $(acrLoginServer)/$(backendImage):$(tag) \
                        -t $(acrLoginServer)/$(backendImage):latest \
                        -f pern-todo-app/backend/Dockerfile pern-todo-app/backend
@@ -43,8 +45,7 @@ stages:
           docker push $(acrLoginServer)/$(backendImage):$(tag)
           docker push $(acrLoginServer)/$(backendImage):latest
           
-          # 3. Build and Push Frontend
-          # Notice the path: pern-todo-app/frontend/Dockerfile
+          # Build and Push Frontend
           docker build -t $(acrLoginServer)/$(frontendImage):$(tag) \
                        -t $(acrLoginServer)/$(frontendImage):latest \
                        -f pern-todo-app/frontend/Dockerfile pern-todo-app/frontend
