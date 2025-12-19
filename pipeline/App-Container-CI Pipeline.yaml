@@ -17,8 +17,6 @@ variables:
   backendImage: 'todo-backend'
   frontendImage: 'todo-frontend'
   tag: '$(Build.BuildId)'
-  # The exact internal URL of your backend
-  backendUrl: 'https://aca-api.internal.gentlehill-16fd5eda.westus2.azurecontainerapps.io:5000'
 
 stages:
 - stage: BuildAndPush
@@ -45,10 +43,9 @@ stages:
           docker push $(acrLoginServer)/$(backendImage):$(tag)
           docker push $(acrLoginServer)/$(backendImage):latest
           
-          # 2. Build and Push Frontend (Crucial FIX: Added --build-arg)
+          # 2. Build and Push Frontend (FIXED: Removed --build-arg for automation)
           docker build -t $(acrLoginServer)/$(frontendImage):$(tag) \
                        -t $(acrLoginServer)/$(frontendImage):latest \
-                       --build-arg VITE_API_URL=$(backendUrl) \
                        -f pern-todo-app/frontend/Dockerfile pern-todo-app/frontend
           
           docker push $(acrLoginServer)/$(frontendImage):$(tag)
