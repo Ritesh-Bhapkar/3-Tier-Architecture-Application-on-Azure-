@@ -1,4 +1,4 @@
-trigger: none # Manually triggered or follows CI
+trigger: none 
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -15,21 +15,21 @@ stages:
   jobs:
   - job: Deploy
     steps:
-    # 1. Deploy Backend Container
-    - task: AzureContainerApps@1
-      displayName: 'Deploy Backend App'
+    - task: AzureCLI@2
+      displayName: 'Update Container App Images'
       inputs:
         azureSubscription: $(azureServiceConnection)
-        resourceGroup: $(resourceGroupName)
-        containerAppName: 'aca-api'
-        imageToDeploy: '$(acrName).azurecr.io/todo-backend:$(imageTag)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # 1. Update Backend Image
+          az containerapp update \
+            --name aca-api \
+            --resource-group $(resourceGroupName) \
+            --image $(acrName).azurecr.io/todo-backend:$(imageTag)
 
-    # 2. Deploy Frontend Container 
-    # (Removed envVars because Bicep handles VITE_API_URL automatically)
-    - task: AzureContainerApps@1
-      displayName: 'Deploy Frontend App'
-      inputs:
-        azureSubscription: $(azureServiceConnection)
-        resourceGroup: $(resourceGroupName)
-        containerAppName: 'aca-frontend'
-        imageToDeploy: '$(acrName).azurecr.io/todo-frontend:$(imageTag)'
+          # 2. Update Frontend Image
+          az containerapp update \
+            --name aca-frontend \
+            --resource-group $(resourceGroupName) \
+            --image $(acrName).azurecr.io/todo-frontend:$(imageTag)
