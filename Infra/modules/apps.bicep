@@ -4,7 +4,6 @@ param environmentId string
 param apiImage string
 param frontendImage string
 param dbHost string
-// Automated DB Params
 param dbUser string
 @secure()
 param dbPassword string
@@ -26,11 +25,12 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     userAssignedIdentities: { '${managedIdentityId}': {} }
   }
   properties: {
-    managedEnvironmentId: environmentId
+    // FIXED: Changed from managedEnvironmentId to environmentId
+    environmentId: environmentId
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        external: false 
+        external: true // MUST be true for the frontend to reach it from the browser
         targetPort: 5000 
         transport: 'auto'
       }
@@ -56,7 +56,6 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_PASSWORD', secretRef: 'db-password' }
           { name: 'DB_NAME', value: dbName }
           { name: 'PORT', value: '5000' }
-          { name: 'FRONTEND_URL', value: 'https://aca-frontend.${location}.azurecontainerapps.io' }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
@@ -73,7 +72,8 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
     userAssignedIdentities: { '${managedIdentityId}': {} }
   }
   properties: {
-    managedEnvironmentId: environmentId
+    // FIXED: Changed from managedEnvironmentId to environmentId
+    environmentId: environmentId
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { external: true, targetPort: 80, transport: 'auto' }
@@ -93,8 +93,8 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         env: [
           { 
             name: 'VITE_API_URL' 
-            // AUTOMATION: Grabs internal FQDN + Port automatically
-            value: 'https://${apiApp.properties.configuration.ingress.fqdn}:5000' 
+            // FIXED: Removed :5000 because Azure Ingress always uses port 443 externally
+            value: 'https://${apiApp.properties.configuration.ingress.fqdn}' 
           }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
