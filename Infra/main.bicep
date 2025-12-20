@@ -12,7 +12,7 @@ param dbUser string = 'psqladmin'
 param dbPassword string
 
 @secure()
-param acrPassword string
+param acrPassword string = ''
 
 // Updated to point to your specific ACR by default
 param apiImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-backend:latest'
