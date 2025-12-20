@@ -46,4 +46,3 @@ stages:
           -dbAdminPassword "$(dbPassword)"
           -dbPassword "$(dbPassword)"
           -dbUser "psqladmin"
-          -acrPassword "$(acrPassword)"
