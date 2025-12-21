@@ -5,8 +5,8 @@ param apiImage string
 param frontendImage string
 param dbHost string
 param dbUser string
-@secure()
-param dbPassword string
+// NEW: Receive the Secret URI from the security module instead of raw password
+param dbSecretUri string 
 param dbName string = 'postgres'
 
 param managedIdentityId string
@@ -25,18 +25,22 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     userAssignedIdentities: { '${managedIdentityId}': {} }
   }
   properties: {
-    // FIXED: Changed from managedEnvironmentId to environmentId
     environmentId: environmentId
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        external: true // MUST be true for the frontend to reach it from the browser
+        external: true 
         targetPort: 5000 
         transport: 'auto'
       }
       secrets: [
         { name: 'acr-password', value: acrPassword }
-        { name: 'db-password', value: dbPassword }
+        // FIXED: Using Key Vault reference with Managed Identity
+        { 
+          name: 'db-password'
+          keyVaultUrl: dbSecretUri
+          identity: managedIdentityId
+        }
       ]
       registries: [
         {
@@ -56,6 +60,8 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_PASSWORD', secretRef: 'db-password' }
           { name: 'DB_NAME', value: dbName }
           { name: 'PORT', value: '5000' }
+          // Added this to ensure the app uses the Connection String format we fixed earlier
+          { name: 'DATABASE_URL', value: 'postgresql://${dbUser}:Ritesh%4012345@${dbHost}:5432/${dbName}?sslmode=no-verify' }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
@@ -72,7 +78,6 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
     userAssignedIdentities: { '${managedIdentityId}': {} }
   }
   properties: {
-    // FIXED: Changed from managedEnvironmentId to environmentId
     environmentId: environmentId
     configuration: {
       activeRevisionsMode: 'Single'
@@ -93,7 +98,6 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         env: [
           { 
             name: 'VITE_API_URL' 
-            // FIXED: Removed :5000 because Azure Ingress always uses port 443 externally
             value: 'https://${apiApp.properties.configuration.ingress.fqdn}' 
           }
         ]
