@@ -14,6 +14,9 @@ param dbPassword string
 @secure()
 param acrPassword string = ''
 
+// Your Workspace ID for Diagnostic Settings
+param workspaceId string = '763a76f6-e9f6-4c9d-aa4b-0dc3869261c9'
+
 // Updated to point to your specific ACR by default
 param apiImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-backend:latest'
 param frontendImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-frontend:latest'
@@ -33,7 +36,6 @@ module security './modules/security.bicep' = {
   params: {
     location: location
     tags: commonTags
-    // NEW: Pass the password to security module so it can be stored in Key Vault
     dbPassword: dbPassword 
   }
 }
@@ -77,12 +79,38 @@ module apps './modules/apps.bicep' = {
     frontendImage: frontendImage
     dbHost: database.outputs.psqlHost
     dbUser: dbUser
-    // FIXED: Instead of raw dbPassword, we pass the secure Secret URI from Key Vault
     dbSecretUri: security.outputs.dbSecretUri 
     managedIdentityId: security.outputs.identityId
     managedIdentityClientId: security.outputs.identityClientId
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
     acrPassword: registry.outputs.acrPassword 
+  }
+}
+
+// --- DRATA REQUIREMENTS: DIAGNOSTIC SETTINGS ---
+
+// Diagnostic Settings for PostgreSQL (Audit Requirement)
+resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'db-diagnostic-logs'
+  scope: database // Applying to the database module
+  properties: {
+    workspaceId: network.outputs.logAnalyticsWorkspaceId
+    logs: [
+      {
+        category: 'PostgreSQLLogs'
+        enabled: true
+      }
+      {
+        category: 'AppQueryResponse'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
