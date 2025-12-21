@@ -11,8 +11,8 @@ param dbUser string = 'psqladmin'
 @secure()
 param dbPassword string
 
-// Your Workspace ID for Diagnostic Settings (Now used in the module call)
-param workspaceId string = '763a76f6-e9f6-4c9d-aa4b-0dc3869261c9'
+// FIXED: Using the fully qualified resource ID for Diagnostic Settings
+param workspaceId string = '/subscriptions/aca42f90-33f4-4476-875d-feb34fe201cb/resourceGroups/gbp-devops-ritesh/providers/Microsoft.OperationalInsights/workspaces/log-3tier-fylxnlaj2ey4a'
 
 // Updated to point to your specific ACR by default
 param apiImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-backend:latest'
@@ -53,7 +53,7 @@ module database './modules/database.bicep' = {
     dbSubnetId: network.outputs.dbSubnetId
     dbAdminLogin: dbAdminLogin
     dbAdminPassword: dbAdminPassword
-    // FIXED: Passing workspaceId to the module where the resource exists
+    // Passing the full resource ID to the module
     workspaceId: workspaceId 
   }
 }
@@ -83,7 +83,6 @@ module apps './modules/apps.bicep' = {
     managedIdentityClientId: security.outputs.identityClientId
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
-    // Registry module handles the password internally
     acrPassword: registry.outputs.acrPassword 
   }
 }
