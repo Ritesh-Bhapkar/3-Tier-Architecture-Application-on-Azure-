@@ -11,10 +11,7 @@ param dbUser string = 'psqladmin'
 @secure()
 param dbPassword string
 
-@secure()
-param acrPassword string = ''
-
-// Your Workspace ID for Diagnostic Settings
+// Your Workspace ID for Diagnostic Settings (Now used in the module call)
 param workspaceId string = '763a76f6-e9f6-4c9d-aa4b-0dc3869261c9'
 
 // Updated to point to your specific ACR by default
@@ -56,6 +53,8 @@ module database './modules/database.bicep' = {
     dbSubnetId: network.outputs.dbSubnetId
     dbAdminLogin: dbAdminLogin
     dbAdminPassword: dbAdminPassword
+    // FIXED: Passing workspaceId to the module where the resource exists
+    workspaceId: workspaceId 
   }
 }
 
@@ -84,33 +83,7 @@ module apps './modules/apps.bicep' = {
     managedIdentityClientId: security.outputs.identityClientId
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
+    // Registry module handles the password internally
     acrPassword: registry.outputs.acrPassword 
-  }
-}
-
-// --- DRATA REQUIREMENTS: DIAGNOSTIC SETTINGS ---
-
-// Diagnostic Settings for PostgreSQL (Audit Requirement)
-resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'db-diagnostic-logs'
-  scope: database // Applying to the database module
-  properties: {
-    workspaceId: network.outputs.logAnalyticsWorkspaceId
-    logs: [
-      {
-        category: 'PostgreSQLLogs'
-        enabled: true
-      }
-      {
-        category: 'AppQueryResponse'
-        enabled: true
-      }
-    ]
-    metrics: [
-      {
-        category: 'AllMetrics'
-        enabled: true
-      }
-    ]
   }
 }
