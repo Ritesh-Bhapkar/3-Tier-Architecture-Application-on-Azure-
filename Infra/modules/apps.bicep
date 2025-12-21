@@ -43,6 +43,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_USER', value: dbUser }
           { name: 'DB_PASSWORD', secretRef: 'db-password' }
           { name: 'DB_NAME', value: dbName }
+          // Use the password from your earlier screenshot directly here for the URL
           { name: 'DATABASE_URL', value: 'postgresql://${dbUser}:Ritesh%4012345@${dbHost}:5432/${dbName}?sslmode=no-verify' }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
