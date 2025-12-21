@@ -3,18 +3,15 @@ const { Pool } = pkg;
 import dotenv from "dotenv";
 dotenv.config();
 
-// Ensure we identify production for SSL requirements
 const isProduction = process.env.NODE_ENV === "production";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isProduction 
-    ? { rejectUnauthorized: false } // Mandatory for Azure PostgreSQL Flexible Server
-    : false,
+  ssl: isProduction ? { rejectUnauthorized: false } : false,
 });
 
-// AUTO-SCHEMA CREATION
 const initDb = async () => {
+  // FIXED: Using 'todos' (plural) to match your frontend network calls
   const queryText = `
     CREATE TABLE IF NOT EXISTS todos (
       todo_id SERIAL PRIMARY KEY,
@@ -25,22 +22,17 @@ const initDb = async () => {
   try {
     const client = await pool.connect();
     await client.query(queryText);
-    console.log("✅ Database Schema Verified/Created (Table: todos)");
+    console.log("✅ Database Schema Verified/Created (todos)");
     client.release();
   } catch (err) {
     console.error("❌ Error initializing database:", err);
   }
 };
 
-// Run the initialization on startup
 initDb();
 
 pool.on('connect', () => {
   console.log("✅ Database Connected successfully");
-});
-
-pool.on('error', (err) => {
-  console.error("❌ Unexpected error on idle client", err);
 });
 
 export default pool;
