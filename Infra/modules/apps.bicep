@@ -5,8 +5,10 @@ param apiImage string
 param frontendImage string
 param dbHost string
 param dbUser string
+// Secret URI from the security module
 param dbSecretUri string 
 param dbName string = 'postgres'
+
 param managedIdentityId string
 param managedIdentityClientId string
 param acrName string
@@ -27,7 +29,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        // CHANGED TO FALSE: This makes the API private
+        // API is private; only accessible inside the environment
         external: false 
         targetPort: 5000 
         transport: 'auto'
@@ -79,7 +81,6 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        // MUST remain true so users can see your website
         external: true 
         targetPort: 80 
         transport: 'auto' 
@@ -100,8 +101,8 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         env: [
           { 
             name: 'VITE_API_URL' 
-            // This will now point to the INTERNAL URL of the apiApp
-            value: 'https://${apiApp.properties.configuration.ingress.fqdn}' 
+            // FIXED: Set to /api so the Nginx Proxy handles the bridge
+            value: '/api' 
           }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
