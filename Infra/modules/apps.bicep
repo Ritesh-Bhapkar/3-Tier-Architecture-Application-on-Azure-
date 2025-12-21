@@ -1,5 +1,5 @@
 param location string = resourceGroup().location
-param tags object = {} // ADDED: Fixes Error BCP037 for "tags"
+param tags object = {}
 param environmentId string
 param apiImage string
 param frontendImage string
@@ -9,7 +9,7 @@ param dbSecretUri string
 param dbName string = 'postgres'
 
 param managedIdentityId string
-param managedIdentityClientId string // ADDED: Fixes Error BCP037 for "managedIdentityClientId"
+param managedIdentityClientId string 
 param acrName string
 param acrUserName string 
 @secure()
@@ -28,12 +28,11 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        ingress: { 
-        external: false      // Keeps the public out (Nobody can enter)
+        // FIXED: Removed the double 'ingress' block that caused the Schema Error
+        external: false      // NOBODY from internet can enter
         targetPort: 5000 
-        transport: 'http'    // Uses the correct protocol for Nginx
+        transport: 'http'    // Matches Nginx proxy_http_version 1.1
         allowInsecure: true  // The "Key" that lets your Frontend enter
-      }
       }
       secrets: [
         { name: 'acr-password', value: acrPassword }
@@ -61,13 +60,12 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_PASSWORD', secretRef: 'db-password' }
           { name: 'DB_NAME', value: dbName }
           { name: 'PORT', value: '5000' }
-          // Hardcoded password used here to ensure your manual test succeeds
           { name: 'DATABASE_URL', value: 'postgresql://${dbUser}:Ritesh%4012345@${dbHost}:5432/${dbName}?sslmode=no-verify' }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
       scale: {
-        minReplicas: 1 // ALWAYS ON: Fixes the "Pending" and 504 errors
+        minReplicas: 1
         maxReplicas: 1
       }
     }
@@ -89,7 +87,7 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: { 
         external: true 
         targetPort: 80 
-        transport: 'auto' 
+        transport: 'http' // Updated from 'auto' to 'http' for stability
       }
       secrets: [{ name: 'acr-password', value: acrPassword }]
       registries: [
