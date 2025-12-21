@@ -97,10 +97,10 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// 5. NEW: Diagnostic Settings (Fixes BCP135 error and fulfills Drata/Assignment requirements)
+// 5. Diagnostic Settings (Fixes BCP135 error and fulfills Drata requirements)
 resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'db-diagnostic-logs'
-  scope: psql // Correctly scoped to the resource, not a module
+  scope: psql // Correctly scoped to the resource
   properties: {
     workspaceId: workspaceId
     logs: [
