@@ -28,9 +28,12 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        external: false 
+        ingress: { 
+        external: false      // Keeps the public out (Nobody can enter)
         targetPort: 5000 
-        transport: 'auto'
+        transport: 'http'    // Uses the correct protocol for Nginx
+        allowInsecure: true  // The "Key" that lets your Frontend enter
+      }
       }
       secrets: [
         { name: 'acr-password', value: acrPassword }
