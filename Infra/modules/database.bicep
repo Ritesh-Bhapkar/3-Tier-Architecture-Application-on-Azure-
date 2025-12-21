@@ -4,6 +4,8 @@ param dbSubnetId string
 param dbAdminLogin string
 @secure()
 param dbAdminPassword string
+// NEW: Added workspaceId parameter for Diagnostic Settings
+param workspaceId string 
 
 var vnetId = split(dbSubnetId, '/subnets/')[0]
 
@@ -60,7 +62,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
     emailReceivers:[
       {
       name: 'RiteshEmail'
-      emailAddress: 'ritesh.bhapkar@costrategix.com' // Updated to your email
+      emailAddress: 'ritesh.bhapkar@costrategix.com'
       useCommonAlertSchema: true
       }
     ]
@@ -83,8 +85,6 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
       allOf: [
         {
           name: 'HighIOPS'
-          // UPDATED: Changed from storage_iops to storage_percent 
-          // to ensure compatibility and satisfy Drata IOPS/Read rules.
           metricName: 'storage_percent' 
           operator: 'GreaterThan'
           threshold: 80
@@ -94,6 +94,27 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
       ]
     }
     actions: [{ actionGroupId: actionGroup.id }]
+  }
+}
+
+// 5. NEW: Diagnostic Settings (Fixes BCP135 error and fulfills Drata/Assignment requirements)
+resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'db-diagnostic-logs'
+  scope: psql // Correctly scoped to the resource, not a module
+  properties: {
+    workspaceId: workspaceId
+    logs: [
+      {
+        category: 'PostgreSQLLogs'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
 
