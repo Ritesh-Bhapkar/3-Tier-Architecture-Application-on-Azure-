@@ -23,7 +23,17 @@ resource kv 'Microsoft.KeyVault/vaults@2023-02-01' = {
       name: 'standard'
     }
     tenantId: subscription().tenantId
-    enableRbacAuthorization: true // MUST be true for the role assignment below to work
+    // CHANGED: Set to false to use Access Policies instead of RBAC roles
+    enableRbacAuthorization: false 
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: identity.properties.principalId // Gives access to the Managed Identity
+        permissions: {
+          secrets: [ 'get', 'list' ] // Permission to read the password
+        }
+      }
+    ]
   }
 }
 
@@ -36,19 +46,7 @@ resource dbSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
   }
 }
 
-// 4. Assign the "Key Vault Secrets User" role to your Managed Identity
-// This specific GUID (4633458b...) is the official Azure ID for secret reading permissions
-var secretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
-
-resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(kv.id, identity.id, secretsUserRoleId)
-  scope: kv
-  properties: {
-    principalId: identity.properties.principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', secretsUserRoleId)
-    principalType: 'ServicePrincipal'
-  }
-}
+// REMOVED: The kvRoleAssignment block is gone because it requires Admin/Owner rights.
 
 // Outputs for your apps.bicep and main.bicep
 output identityId string = identity.id
