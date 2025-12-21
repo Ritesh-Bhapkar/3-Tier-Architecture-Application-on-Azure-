@@ -3,20 +3,20 @@ const { Pool } = pkg;
 import dotenv from "dotenv";
 dotenv.config();
 
-// Use the connection string provided by Azure Bicep
+// Ensure we identify production for SSL requirements
 const isProduction = process.env.NODE_ENV === "production";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: isProduction 
-    ? { rejectUnauthorized: false } // Required for Azure Flexible Server
+    ? { rejectUnauthorized: false } // Mandatory for Azure PostgreSQL Flexible Server
     : false,
 });
 
-// AUTO-SCHEMA CREATION: Fixes Add, Update, and Delete automatically
+// AUTO-SCHEMA CREATION
 const initDb = async () => {
   const queryText = `
-    CREATE TABLE IF NOT EXISTS todo (
+    CREATE TABLE IF NOT EXISTS todos (
       todo_id SERIAL PRIMARY KEY,
       description TEXT NOT NULL,
       completed BOOLEAN DEFAULT false
@@ -25,17 +25,16 @@ const initDb = async () => {
   try {
     const client = await pool.connect();
     await client.query(queryText);
-    console.log("✅ Database Schema Verified/Created");
+    console.log("✅ Database Schema Verified/Created (Table: todos)");
     client.release();
   } catch (err) {
     console.error("❌ Error initializing database:", err);
   }
 };
 
-// Run the initialization
+// Run the initialization on startup
 initDb();
 
-// Log connection status for Azure Log Analytics
 pool.on('connect', () => {
   console.log("✅ Database Connected successfully");
 });
