@@ -14,7 +14,7 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
 
 // 2. Create the Key Vault (The "Digital Safe")
 resource kv 'Microsoft.KeyVault/vaults@2023-02-01' = {
-  name: 'kv5t-v2-${uniqueString(resourceGroup().id)}'
+  name: 'kv5t-v3-${uniqueString(resourceGroup().id)}'
   location: location
   tags: tags
   properties: {
