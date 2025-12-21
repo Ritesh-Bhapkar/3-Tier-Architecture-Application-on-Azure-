@@ -64,6 +64,11 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
+      // FIXED: Scaling configuration to prevent "Scaled to 0"
+      scale: {
+        minReplicas: 1
+        maxReplicas: 1
+      }
     }
   }
 }
@@ -107,6 +112,11 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
+      // Recommended: Ensure frontend is also always up
+      scale: {
+        minReplicas: 1
+        maxReplicas: 1
+      }
     }
   }
 }
