@@ -112,6 +112,7 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
 resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-5xx-errors'
   location: 'global'
+  tags: tags
   properties: {
     description: 'Alert when API returns 5xx errors'
     severity: 1
@@ -140,6 +141,7 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-latency'
   location: 'global'
+  tags: tags
   properties: {
     description: 'Alert when API response time is > 1.5s'
     severity: 2
