@@ -84,5 +84,7 @@ module apps './modules/apps.bicep' = {
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
     acrPassword: registry.outputs.acrPassword 
+    // ADDED: Passing the action group ID from database module to apps module
+    actionGroupId: database.outputs.actionGroupId
   }
 }
