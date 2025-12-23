@@ -1,10 +1,9 @@
-param location string
-param tags object
+param location string = resourceGroup().location
+param tags object = {}
 param dbSubnetId string
 param dbAdminLogin string
 @secure()
 param dbAdminPassword string
-// NEW: Added workspaceId parameter for Diagnostic Settings
 param workspaceId string 
 
 var vnetId = split(dbSubnetId, '/subnets/')[0]
@@ -51,7 +50,7 @@ resource psql 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-preview' = {
   dependsOn: [ dnsVnetLink ]
 }
 
-// 3. Action Group (Required by Drata/Policy)
+// 3. Action Group
 resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
   name: 'db-action-group'
   location: 'Global'
@@ -61,15 +60,15 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
     enabled: true
     emailReceivers:[
       {
-      name: 'RiteshEmail'
-      emailAddress: 'ritesh.bhapkar@costrategix.com'
-      useCommonAlertSchema: true
+        name: 'RiteshEmail'
+        emailAddress: 'ritesh.bhapkar@costrategix.com'
+        useCommonAlertSchema: true
       }
     ]
   }
 }
 
-// 4. Corrected Metric Alert
+// 4. Metric Alert
 resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'Postgres-IOPS-Alert'
   location: 'global'
@@ -97,25 +96,17 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// 5. Diagnostic Settings (Fixes BCP135 error and fulfills Drata requirements)
+// 5. Diagnostic Settings
 resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'db-diagnostic-logs'
-  scope: psql // Correctly scoped to the resource
+  scope: psql
   properties: {
     workspaceId: workspaceId
-    logs: [
-      {
-        category: 'PostgreSQLLogs'
-        enabled: true
-      }
-    ]
-    metrics: [
-      {
-        category: 'AllMetrics'
-        enabled: true
-      }
-    ]
+    logs: [ { category: 'PostgreSQLLogs', enabled: true } ]
+    metrics: [ { category: 'AllMetrics', enabled: true } ]
   }
 }
 
+// OUTPUTS
 output psqlHost string = psql.properties.fullyQualifiedDomainName
+output actionGroupId string = actionGroup.id // <--- THIS IS KEY
