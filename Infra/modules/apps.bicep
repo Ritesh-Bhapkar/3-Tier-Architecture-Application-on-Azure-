@@ -7,13 +7,13 @@ param dbHost string
 param dbUser string
 param dbSecretUri string 
 param dbName string = 'postgres'
-
 param managedIdentityId string
 param managedIdentityClientId string 
 param acrName string
 param acrUserName string 
 @secure()
 param acrPassword string 
+param actionGroupId string // <--- NEW PARAMETER
 
 resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'aca-api'
@@ -28,11 +28,10 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: { 
-        // FIXED: Removed the double 'ingress' block that caused the Schema Error
-        external: false      // NOBODY from internet can enter
+        external: false      
         targetPort: 5000 
-        transport: 'http'    // Matches Nginx proxy_http_version 1.1
-        allowInsecure: true  // The "Key" that lets your Frontend enter
+        transport: 'http'    
+        allowInsecure: true  
       }
       secrets: [
         { name: 'acr-password', value: acrPassword }
@@ -64,10 +63,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
+      scale: { minReplicas: 1, maxReplicas: 1 }
     }
   }
 }
@@ -87,7 +83,7 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: { 
         external: true 
         targetPort: 80 
-        transport: 'http' // Updated from 'auto' to 'http' for stability
+        transport: 'http' 
       }
       secrets: [{ name: 'acr-password', value: acrPassword }]
       registries: [
@@ -105,10 +101,64 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         env: [{ name: 'VITE_API_URL', value: '/api' }]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
+      scale: { minReplicas: 1, maxReplicas: 1 }
     }
+  }
+}
+
+// --- NEW APP LEVEL ALERTS ---
+
+// Alert 1: High Error Rate (5xx)
+resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'alert-api-5xx-errors'
+  location: 'global'
+  properties: {
+    description: 'Alert when API returns 5xx errors'
+    severity: 1
+    enabled: true
+    scopes: [ apiApp.id ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'High5xx'
+          metricName: 'Requests'
+          operator: 'GreaterThan'
+          threshold: 5
+          timeAggregation: 'Count'
+          dimensions: [{ name: 'StatusCode', operator: 'Include', values: [ '5xx' ] }]
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroupId }]
+  }
+}
+
+// Alert 2: High Latency (Slow Response)
+resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'alert-api-latency'
+  location: 'global'
+  properties: {
+    description: 'Alert when API response time is > 1.5s'
+    severity: 2
+    enabled: true
+    scopes: [ apiApp.id ]
+    evaluationFrequency: 'PT5M'
+    windowSize: 'PT15M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'SlowResponse'
+          metricName: 'ResponseTime'
+          operator: 'GreaterThan'
+          threshold: 1500
+          timeAggregation: 'Average'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroupId }]
   }
 }
