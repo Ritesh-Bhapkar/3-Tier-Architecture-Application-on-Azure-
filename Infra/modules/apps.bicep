@@ -164,3 +164,33 @@ resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     actions: [{ actionGroupId: actionGroupId }]
   }
 }
+
+// --- ADDED: FRONTEND ALERTS ---
+
+// Alert 3: Frontend High Traffic (Too many requests)
+resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'alert-frontend-high-traffic'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'Alert when frontend receives more than 100 requests in 1 minute'
+    severity: 2
+    enabled: true
+    scopes: [ frontendApp.id ]
+    evaluationFrequency: 'PT1M' // Check every 1 minute
+    windowSize: 'PT1M'        // Look back at the last 1 minute
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'HighTraffic'
+          metricName: 'Requests' //
+          operator: 'GreaterThan'
+          threshold: 50
+          timeAggregation: 'Total'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroupId }]
+  }
+}
