@@ -14,9 +14,9 @@ param acrUserName string
 @secure()
 param acrPassword string 
 param actionGroupId string 
-// This is the only new parameter needed
 param logAnalyticsWorkspaceName string 
 
+// This creates the monitoring brain locally within the module
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'app-insights-3tier'
   location: location
@@ -47,18 +47,10 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
       }
       secrets: [
         { name: 'acr-password', value: acrPassword }
-        { 
-          name: 'db-password'
-          keyVaultUrl: dbSecretUri
-          identity: managedIdentityId
-        }
+        { name: 'db-password', keyVaultUrl: dbSecretUri, identity: managedIdentityId }
       ]
       registries: [
-        {
-          server: '${acrName}.azurecr.io'
-          username: acrUserName
-          passwordSecretRef: 'acr-password'
-        }
+        { server: '${acrName}.azurecr.io', username: acrUserName, passwordSecretRef: 'acr-password' }
       ]
     }
     template: {
@@ -93,18 +85,10 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
     environmentId: environmentId
     configuration: {
       activeRevisionsMode: 'Single'
-      ingress: { 
-        external: true 
-        targetPort: 80 
-        transport: 'http' 
-      }
+      ingress: { external: true, targetPort: 80, transport: 'http' }
       secrets: [{ name: 'acr-password', value: acrPassword }]
       registries: [
-        {
-          server: '${acrName}.azurecr.io'
-          username: acrUserName
-          passwordSecretRef: 'acr-password'
-        }
+        { server: '${acrName}.azurecr.io', username: acrUserName, passwordSecretRef: 'acr-password' }
       ]
     }
     template: {
@@ -122,7 +106,7 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
   }
 }
 
-// Alerts - CriterionType added to stop warnings
+// Alerts with criterionType fixed to remove warnings
 resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-5xx-errors'
   location: 'global'
