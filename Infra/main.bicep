@@ -1,20 +1,14 @@
 targetScope = 'resourceGroup'
-
 param location string = resourceGroup().location
 param dbAdminLogin string = 'psqladmin'
 
 @secure()
 param dbAdminPassword string
-
-// Parameters to catch values from the pipeline or defaults
 param dbUser string = 'psqladmin'
+
 @secure()
 param dbPassword string
-
-// FIXED: Using the fully qualified resource ID for Diagnostic Settings
 param workspaceId string = '/subscriptions/aca42f90-33f4-4476-875d-feb34fe201cb/resourceGroups/gbp-devops-ritesh/providers/Microsoft.OperationalInsights/workspaces/log-3tier-fylxnlaj2ey4a'
-
-// Updated to point to your specific ACR by default
 param apiImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-backend:latest'
 param frontendImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-frontend:latest'
 
@@ -53,7 +47,6 @@ module database './modules/database.bicep' = {
     dbSubnetId: network.outputs.dbSubnetId
     dbAdminLogin: dbAdminLogin
     dbAdminPassword: dbAdminPassword
-    // Passing the full resource ID to the module
     workspaceId: workspaceId 
   }
 }
@@ -84,7 +77,7 @@ module apps './modules/apps.bicep' = {
     acrName: registry.outputs.acrName 
     acrUserName: registry.outputs.acrUserName
     acrPassword: registry.outputs.acrPassword 
-    // ADDED: Passing the action group ID from database module to apps module
     actionGroupId: database.outputs.actionGroupId
+    appInsightsConnectionString: appInsights.properties.ConnectionString
   }
 }
