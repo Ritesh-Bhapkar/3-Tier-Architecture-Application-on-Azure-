@@ -14,6 +14,16 @@ param frontendImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-frontend:lat
 
 var commonTags = resourceGroup().tags
 
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: 'app-insights-3tier'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: workspaceId 
+  }
+}
+
 module network './modules/network.bicep' = {
   name: 'network-module'
   params: {
@@ -78,6 +88,7 @@ module apps './modules/apps.bicep' = {
     acrUserName: registry.outputs.acrUserName
     acrPassword: registry.outputs.acrPassword 
     actionGroupId: database.outputs.actionGroupId
+    // FIXED: Now passing the generated connection string to your apps module
     appInsightsConnectionString: appInsights.properties.ConnectionString
   }
 }
