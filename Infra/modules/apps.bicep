@@ -13,7 +13,8 @@ param acrName string
 param acrUserName string 
 @secure()
 param acrPassword string 
-param actionGroupId string // <--- NEW PARAMETER
+param actionGroupId string 
+param appInsightsConnectionString string 
 
 resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'aca-api'
@@ -60,6 +61,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_NAME', value: dbName }
           { name: 'PORT', value: '5000' }
           { name: 'DATABASE_URL', value: 'postgresql://${dbUser}:Ritesh%4012345@${dbHost}:5432/${dbName}?sslmode=no-verify' }
+          { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
@@ -98,7 +100,10 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [{
         name: 'frontend'
         image: frontendImage
-        env: [{ name: 'VITE_API_URL', value: '/api' }]
+        env: [
+          { name: 'VITE_API_URL', value: '/api' }
+          { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
+        ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
       }]
       scale: { minReplicas: 1, maxReplicas: 1 }
@@ -106,9 +111,6 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
   }
 }
 
-// --- NEW APP LEVEL ALERTS ---
-
-// Alert 1: High Error Rate (5xx)
 resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-5xx-errors'
   location: 'global'
@@ -137,7 +139,6 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// Alert 2: High Latency (Slow Response)
 resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-latency'
   location: 'global'
@@ -165,26 +166,23 @@ resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// --- ADDED: FRONTEND ALERTS ---
-
-// Alert 3: Frontend High Traffic (Too many requests)
 resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-frontend-high-traffic'
   location: 'global'
   tags: tags
   properties: {
-    description: 'Alert when frontend receives more than 100 requests in 1 minute'
+    description: 'Alert when frontend receives more than 50 requests in 1 minute'
     severity: 2
     enabled: true
     scopes: [ frontendApp.id ]
-    evaluationFrequency: 'PT1M' // Check every 1 minute
-    windowSize: 'PT1M'        // Look back at the last 1 minute
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT1M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighTraffic'
-          metricName: 'Requests' //
+          metricName: 'Requests'
           operator: 'GreaterThan'
           threshold: 50
           timeAggregation: 'Total'
