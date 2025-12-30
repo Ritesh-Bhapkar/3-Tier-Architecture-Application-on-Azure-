@@ -109,6 +109,7 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
 // Alerts with criterionType fixed to remove warnings
 resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-5xx-errors'
+  tags: tags
   location: 'global'
   properties: {
     description: 'Alert when API returns 5xx errors'
@@ -138,6 +139,7 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-latency'
   location: 'global'
+  tags: tags
   properties: {
     description: 'Alert when API response time is > 1.5s'
     severity: 2
@@ -165,6 +167,7 @@ resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-frontend-high-traffic'
   location: 'global'
+  tags: tags
   properties: {
     description: 'Alert when frontend receives more than 50 requests in 1 minute'
     severity: 2
