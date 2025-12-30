@@ -16,9 +16,9 @@ param acrPassword string
 param actionGroupId string 
 param logAnalyticsWorkspaceName string 
 
-// This creates the monitoring brain locally within the module
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'app-insights-3tier'
+  tags: tags
   location: location
   kind: 'web'
   properties: {
