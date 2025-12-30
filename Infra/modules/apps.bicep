@@ -14,22 +14,19 @@ param acrUserName string
 @secure()
 param acrPassword string 
 param actionGroupId string 
-// This parameter allows you to link to your existing Log Analytics
+// This is the only new parameter needed
 param logAnalyticsWorkspaceName string 
 
-// --- INFRASTRUCTURE: MONITORING BRAIN ---
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'app-insights-3tier'
   location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    // This dynamically links to the workspace ID provided in your main pipeline
     WorkspaceResourceId: resourceId('Microsoft.OperationalInsights/workspaces', logAnalyticsWorkspaceName)
   }
 }
 
-// --- BACKEND API ---
 resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'aca-api'
   location: location
@@ -75,7 +72,6 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_NAME', value: dbName }
           { name: 'PORT', value: '5000' }
           { name: 'DATABASE_URL', value: 'postgresql://${dbUser}:Ritesh%4012345@${dbHost}:5432/${dbName}?sslmode=no-verify' }
-          // Injects the connection string directly from the resource above
           { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
@@ -85,7 +81,6 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
   }
 }
 
-// --- FRONTEND APP ---
 resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: 'aca-frontend'
   location: location
@@ -118,7 +113,6 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         image: frontendImage
         env: [
           { name: 'VITE_API_URL', value: '/api' }
-          // Injects the same connection string for cross-app tracking
           { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
@@ -128,11 +122,10 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
   }
 }
 
-// --- SRE ALERTS ---
+// Alerts - CriterionType added to stop warnings
 resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-5xx-errors'
   location: 'global'
-  tags: tags
   properties: {
     description: 'Alert when API returns 5xx errors'
     severity: 1
@@ -150,7 +143,6 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           threshold: 5
           timeAggregation: 'Total'
           dimensions: [{ name: 'StatusCode', operator: 'Include', values: [ '5xx' ] }]
-          // Added to resolve the BCP035 Warning
           criterionType: 'StaticThresholdCriterion'
         }
       ]
@@ -162,7 +154,6 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-api-latency'
   location: 'global'
-  tags: tags
   properties: {
     description: 'Alert when API response time is > 1.5s'
     severity: 2
@@ -190,7 +181,6 @@ resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-frontend-high-traffic'
   location: 'global'
-  tags: tags
   properties: {
     description: 'Alert when frontend receives more than 50 requests in 1 minute'
     severity: 2
