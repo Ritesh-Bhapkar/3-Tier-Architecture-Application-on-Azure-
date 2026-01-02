@@ -210,11 +210,9 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
     Kind: 'standard'
     RetryEnabled: true
     Locations: [
-      { Id: 'us-ca-sjc-azr' }        // West US
-      { Id: 'emea-nl-ams-azr' }      // West Europe
-      { Id: 'emea-se-sto-edge' }     // UK West (Bicep ID for this region)
-      { Id: 'apac-sg-sin-azr' }      // Southeast Asia
-      { Id: 'emea-fr-pra-azr' }      // France Central
+      { Id: 'us-ca-sjc-azr' }        // West US (San Jose)
+      { Id: 'emea-nl-ams-azr' }      // West Europe (Amsterdam)
+      { Id: 'apac-sg-sin-azr' }      // Southeast Asia (Singapore)
     ]
     Request: {
       RequestUrl: 'https://${frontendApp.properties.configuration.ingress.fqdn}'
