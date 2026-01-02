@@ -209,9 +209,9 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
     Kind: 'standard'
     RetryEnabled: true
     Locations: [
-      { Id: 'apac-in-chennai-edge' }
-      { Id: 'us-ca-sjc-azr' }
-      { Id: 'emea-gb-ncl-edge' }
+      { Id: 'us-ca-sjc-azr' }        // West US (Near your server)
+      { Id: 'emea-nl-ams-azr' }      // West Europe
+      { Id: 'apac-sg-sin-azr' }      // Singapore (Closest stable node to India)
     ]
     Configuration: {
       WebTest: '<WebTest Name="Bengaluru-to-US-Check" Id="00000000-0000-0000-0000-000000000000" Enabled="True" CssProjectStructure="" ExpectedHttpStatusCode="200" Timeout="30" PersistCookieHandler="False" MaintainHttpAzureAdAccount="False" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Items><Request Method="GET" Guid="00000000-0000-0000-0000-000000000000" Version="1.1" Url="https://${frontendApp.properties.configuration.ingress.fqdn}" ThinkTime="0" Timeout="30" ParseDependentRequests="False" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" AcceptLanguage="" Accept="" Headers="" /></Items></WebTest>'
