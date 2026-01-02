@@ -193,6 +193,7 @@ resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
   }
 }
 
+
 resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   name: 'Bengaluru-to-US-Check'
   location: location
@@ -201,6 +202,7 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   })
   kind: 'standard'
   properties: {
+    Name: 'Bengaluru-to-US-Check'
     Enabled: true
     Frequency: 300
     Timeout: 30
