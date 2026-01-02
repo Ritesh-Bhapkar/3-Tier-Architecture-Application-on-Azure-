@@ -196,7 +196,9 @@ resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
 resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   name: 'Bengaluru-to-US-Check'
   location: location
-  tags: tags
+  tags: union(tags, {
+    'hidden-link:${appInsights.id}': 'Resource'
+  })
   kind: 'standard'
   properties: {
     Enabled: true
