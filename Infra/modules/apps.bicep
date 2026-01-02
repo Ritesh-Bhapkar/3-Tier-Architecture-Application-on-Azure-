@@ -192,3 +192,26 @@ resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
     actions: [{ actionGroupId: actionGroupId }]
   }
 }
+
+resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
+  name: 'Bengaluru-to-US-Check'
+  location: location
+  tags: tags
+  kind: 'standard'
+  properties: {
+    Enabled: true
+    Frequency: 300
+    Timeout: 30
+    Kind: 'standard'
+    RetryEnabled: true
+    Locations: [
+      { Id: 'apac-in-chennai-edge' }
+      { Id: 'us-ca-sjc-azr' }
+      { Id: 'emea-gb-ncl-edge' }
+    ]
+    Configuration: {
+      WebTest: '<WebTest Name="Bengaluru-to-US-Check" Id="00000000-0000-0000-0000-000000000000" Enabled="True" CssProjectStructure="" ExpectedHttpStatusCode="200" Timeout="30" PersistCookieHandler="False" MaintainHttpAzureAdAccount="False" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Items><Request Method="GET" Guid="00000000-0000-0000-0000-000000000000" Version="1.1" Url="https://${frontendApp.properties.configuration.ingress.fqdn}" ThinkTime="0" Timeout="30" ParseDependentRequests="False" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" AcceptLanguage="" Accept="" Headers="" /></Items></WebTest>'
+    }
+    SyntheticMonitorId: 'Bengaluru-to-US-Check'
+  }
+}
