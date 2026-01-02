@@ -194,28 +194,38 @@ resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
 }
 
 
+// --- FINAL SRE PRODUCTION-READY WEB TEST ---
 resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   name: 'Bengaluru-to-US-Check'
   location: location
   tags: union(tags, {
+    // This hidden link is mandatory for the test to show in App Insights
     'hidden-link:${appInsights.id}': 'Resource'
   })
   kind: 'standard'
   properties: {
     Name: 'Bengaluru-to-US-Check'
     Enabled: true
-    Frequency: 300
-    Timeout: 30
+    Frequency: 300 // 5 minutes
+    Timeout: 120   // Matches your Success Criteria in portal
     Kind: 'standard'
     RetryEnabled: true
     Locations: [
-      { Id: 'us-ca-sjc-azr' }        // West US (Near your server)
+      { Id: 'us-ca-sjc-azr' }        // West US
       { Id: 'emea-nl-ams-azr' }      // West Europe
-      { Id: 'apac-sg-sin-azr' }      // Singapore (Closest stable node to India)
+      { Id: 'apac-sg-sin-azr' }      // Singapore (Asia Pacific)
+      { Id: 'emea-gb-ncl-edge' }     // UK West
+      { Id: 'emea-fr-pra-azr' }      // France Central
     ]
-    Configuration: {
-      WebTest: '<WebTest Name="Bengaluru-to-US-Check" Id="00000000-0000-0000-0000-000000000000" Enabled="True" CssProjectStructure="" ExpectedHttpStatusCode="200" Timeout="30" PersistCookieHandler="False" MaintainHttpAzureAdAccount="False" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Items><Request Method="GET" Guid="00000000-0000-0000-0000-000000000000" Version="1.1" Url="https://${frontendApp.properties.configuration.ingress.fqdn}" ThinkTime="0" Timeout="30" ParseDependentRequests="False" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" AcceptLanguage="" Accept="" Headers="" /></Items></WebTest>'
+    Request: {
+      RequestUrl: 'https://${frontendApp.properties.configuration.ingress.fqdn}'
+      HttpVerb: 'GET'
+      ParseDependentRequests: false // Keep cost low as discussed
     }
-    SyntheticMonitorId: 'Bengaluru-to-US-Check'
+    ValidationRules: {
+      ExpectedHttpStatusCode: 200
+      SSLCheck: true // Matches your screenshot
+      SSLCertRemainingLifetimeCheck: 7 // Matches your proactive check
+    }
   }
 }
