@@ -194,38 +194,37 @@ resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
 }
 
 
-// --- FINAL SRE PRODUCTION-READY WEB TEST ---
+// --- SRE VERIFIED: LOCATIONS MATCHING YOUR SCREENSHOT ---
 resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   name: 'Bengaluru-to-US-Check'
   location: location
   tags: union(tags, {
-    // This hidden link is mandatory for the test to show in App Insights
     'hidden-link:${appInsights.id}': 'Resource'
   })
   kind: 'standard'
   properties: {
     Name: 'Bengaluru-to-US-Check'
     Enabled: true
-    Frequency: 300 // 5 minutes
-    Timeout: 120   // Matches your Success Criteria in portal
+    Frequency: 300
+    Timeout: 120
     Kind: 'standard'
     RetryEnabled: true
     Locations: [
       { Id: 'us-ca-sjc-azr' }        // West US
       { Id: 'emea-nl-ams-azr' }      // West Europe
-      { Id: 'apac-sg-sin-azr' }      // Singapore (Asia Pacific)
-      { Id: 'emea-gb-ncl-edge' }     // UK West
+      { Id: 'emea-se-sto-edge' }     // UK West (Bicep ID for this region)
+      { Id: 'apac-sg-sin-azr' }      // Southeast Asia
       { Id: 'emea-fr-pra-azr' }      // France Central
     ]
     Request: {
       RequestUrl: 'https://${frontendApp.properties.configuration.ingress.fqdn}'
       HttpVerb: 'GET'
-      ParseDependentRequests: false // Keep cost low as discussed
+      ParseDependentRequests: false
     }
     ValidationRules: {
       ExpectedHttpStatusCode: 200
-      SSLCheck: true // Matches your screenshot
-      SSLCertRemainingLifetimeCheck: 7 // Matches your proactive check
+      SSLCheck: true
+      SSLCertRemainingLifetimeCheck: 7
     }
   }
 }
