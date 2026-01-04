@@ -223,6 +223,7 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   }
 }
 
+// 1. GLOBAL REACHABILITY ALERT
 resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-global-reachability'
   location: 'global'
@@ -231,11 +232,15 @@ resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     description: 'Critical: The site is unreachable from global nodes.'
     severity: 1
     enabled: true
-    scopes: [ availabilityTest.id ] 
+    // FIX: Scopes MUST include both resources for Webtest criteria to be valid
+    scopes: [
+      appInsights.id
+      availabilityTest.id
+    ]
     evaluationFrequency: 'PT1M'
     windowSize: 'PT5M'
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria' 
+      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
       webTestId: availabilityTest.id
       componentId: appInsights.id
       failedLocationCount: 2 
@@ -244,26 +249,27 @@ resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-resource appSuccessAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'alert-app-success-rate'
+// 2. DATABASE CONNECTIVITY ALERT
+resource dbConnectionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'alert-db-connection-failure'
   location: 'global'
   tags: tags
   properties: {
-    description: 'High: Overall application success rate dropped below 90%.'
-    severity: 1
+    description: 'Emergency: API cannot communicate with the Database'
+    severity: 0 
     enabled: true
-    scopes: [ appInsights.id ] 
+    scopes: [ appInsights.id ] // Standard metric alerts only need one scope
     evaluationFrequency: 'PT1M'
     windowSize: 'PT5M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
       allOf: [
         {
-          name: 'AvailabilityPercentage'
-          metricName: 'availabilityResults/availabilityPercentage'
-          operator: 'LessThan'
-          threshold: 90
-          timeAggregation: 'Average'
+          name: 'DbFailures'
+          metricName: 'dependencies/failed'
+          operator: 'GreaterThan'
+          threshold: 0
+          timeAggregation: 'Count'
           criterionType: 'StaticThresholdCriterion'
         }
       ]
