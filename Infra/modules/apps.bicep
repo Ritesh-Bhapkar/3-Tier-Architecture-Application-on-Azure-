@@ -64,7 +64,6 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
           { name: 'DB_NAME', value: dbName }
           { name: 'PORT', value: '5000' }
           { name: 'DATABASE_URL', value: 'postgresql://${dbUser}:Ritesh%4012345@${dbHost}:5432/${dbName}?sslmode=no-verify' }
-          // Standard naming for the Node.js SDK
           { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
@@ -98,7 +97,6 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         image: frontendImage
         env: [
           { name: 'VITE_API_URL', value: '/api' }
-          // FIXED: Uses the VITE_ prefix so the browser can access this value
           { name: 'VITE_APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
         ]
         resources: { cpu: json('0.25'), memory: '0.5Gi' }
@@ -193,8 +191,6 @@ resource frontendHighTrafficAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
   }
 }
 
-
-// --- SRE VERIFIED: LOCATIONS MATCHING YOUR SCREENSHOT ---
 resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   name: 'Bengaluru-to-US-Check'
   location: location
@@ -210,9 +206,9 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
     Kind: 'standard'
     RetryEnabled: true
     Locations: [
-      { Id: 'us-ca-sjc-azr' }        // West US (San Jose)
-      { Id: 'emea-nl-ams-azr' }      // West Europe (Amsterdam)
-      { Id: 'apac-sg-sin-azr' }      // Southeast Asia (Singapore)
+      { Id: 'us-ca-sjc-azr' }    
+      { Id: 'emea-nl-ams-azr' }      
+      { Id: 'apac-sg-sin-azr' }    
     ]
     Request: {
       RequestUrl: 'https://${frontendApp.properties.configuration.ingress.fqdn}'
@@ -224,5 +220,61 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
       SSLCheck: true
       SSLCertRemainingLifetimeCheck: 7
     }
+  }
+}
+
+resource globalAvailabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'alert-global-availability'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'Alert if site is unreachable from more than 1 global location'
+    severity: 1
+    enabled: true
+    scopes: [ availabilityTest.id, appInsights.id ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'AvailabilityFail'
+          metricName: 'availabilityResults/availabilityPercentage'
+          operator: 'LessThan'
+          threshold: 90
+          timeAggregation: 'Average'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroupId }]
+  }
+}
+
+resource dbConnectionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'alert-db-connection-failure'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'Alert if API cannot communicate with the Database'
+    severity: 0 
+    enabled: true
+    scopes: [ appInsights.id ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'DbFailures'
+          metricName: 'dependencies/failed'
+          operator: 'GreaterThan'
+          threshold: 0
+          timeAggregation: 'Count'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroupId }]
   }
 }
