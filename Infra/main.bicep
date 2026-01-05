@@ -13,8 +13,6 @@ param apiImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-backend:latest'
 param frontendImage string = 'acr3tierfylxnlaj2ey4a.azurecr.io/todo-frontend:latest'
 
 var commonTags = resourceGroup().tags
-
-// Extracting just the name from the full workspaceId string for the module
 var workspaceName = 'log-3tier-fylxnlaj2ey4a' 
 
 module network './modules/network.bicep' = {
@@ -81,7 +79,6 @@ module apps './modules/apps.bicep' = {
     acrUserName: registry.outputs.acrUserName
     acrPassword: registry.outputs.acrPassword 
     actionGroupId: database.outputs.actionGroupId
-    // FIXED: Passing the name and removed the old connection string param
     logAnalyticsWorkspaceName: workspaceName
   }
 }
