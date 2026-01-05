@@ -223,7 +223,6 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   }
 }
 
-// 1. GLOBAL REACHABILITY ALERT
 resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-global-reachability'
   location: 'global'
@@ -232,7 +231,6 @@ resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     description: 'Critical: The site is unreachable from global nodes.'
     severity: 1
     enabled: true
-    // FIX: Scopes MUST include both resources for Webtest criteria to be valid
     scopes: [
       appInsights.id
       availabilityTest.id
@@ -249,7 +247,7 @@ resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// 2. DATABASE CONNECTIVITY ALERT
+
 resource dbConnectionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-db-connection-failure'
   location: 'global'
@@ -258,7 +256,7 @@ resource dbConnectionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     description: 'Emergency: API cannot communicate with the Database'
     severity: 0 
     enabled: true
-    scopes: [ appInsights.id ] // Standard metric alerts only need one scope
+    scopes: [ appInsights.id ]
     evaluationFrequency: 'PT1M'
     windowSize: 'PT5M'
     criteria: {
