@@ -8,7 +8,6 @@ param workspaceId string
 
 var vnetId = split(dbSubnetId, '/subnets/')[0]
 
-// 1. Private DNS Zone
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: '${uniqueString(resourceGroup().id)}.postgres.database.azure.com'
   location: 'global'
@@ -28,7 +27,6 @@ resource dnsVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020
   }
 }
 
-// 2. PostgreSQL Flexible Server
 resource psql 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-preview' = {
   name: 'psql-3tier-${uniqueString(resourceGroup().id)}'
   location: location
@@ -50,7 +48,6 @@ resource psql 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-preview' = {
   dependsOn: [ dnsVnetLink ]
 }
 
-// 3. Action Group
 resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
   name: 'db-action-group'
   location: 'Global'
@@ -68,12 +65,13 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
   }
 }
 
-// 4. Metric Alert
+// 4. Metric Alert (Updated for Read IOPS)
 resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'Postgres-IOPS-Alert'
+  name: 'Postgres-Read-IOPS-Alert'
   location: 'global'
   tags: tags
   properties: {
+    description: 'Alert when Database Read IOPS are high'
     scopes: [ psql.id ]
     severity: 2
     enabled: true
@@ -83,10 +81,10 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
       allOf: [
         {
-          name: 'HighIOPS'
-          metricName: 'storage_percent' 
+          name: 'HighReadIOPS'
+          metricName: 'read_iops' 
           operator: 'GreaterThan'
-          threshold: 80
+          threshold: 1 
           timeAggregation: 'Average'
           criterionType: 'StaticThresholdCriterion'
         }
@@ -96,7 +94,6 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
-// 5. Diagnostic Settings
 resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'db-diagnostic-logs'
   scope: psql
@@ -107,6 +104,5 @@ resource dbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview
   }
 }
 
-// OUTPUTS
 output psqlHost string = psql.properties.fullyQualifiedDomainName
-output actionGroupId string = actionGroup.id // <--- THIS IS KEY
+output actionGroupId string = actionGroup.id
