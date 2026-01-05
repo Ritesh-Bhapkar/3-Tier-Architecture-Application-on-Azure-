@@ -26,14 +26,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         name: 'snet-aca'
         properties: {
           addressPrefix: '10.0.0.0/23'
-          // Note: Delegation is removed here to allow ACA Environment to manage the subnet
         }
       }
       {
         name: 'snet-db'
         properties: {
           addressPrefix: '10.0.2.0/24'
-          // PostgreSQL Flexible Server REQUIRES this delegation
           delegations: [
             { 
               name: 'psql-delegation'
