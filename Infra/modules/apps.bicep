@@ -126,7 +126,7 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           operator: 'GreaterThan'
           threshold: 5
           timeAggregation: 'Total'
-          dimensions: [{ name: 'Status Code Category', operator: 'Include', values: [ '5xx' ] }]
+          dimensions: [{ name: 'StatusCode', operator: 'Include', values: [ '5xx' ] }]
           criterionType: 'StaticThresholdCriterion'
         }
       ]
@@ -198,7 +198,7 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
     'hidden-link:${appInsights.id}': 'Resource'
   })
   kind: 'standard'
-  properties: {
+  properties: {The metric Requests specifies a dimension Status Code Category which was not found. Activity ID: a0e07a3c-7804-4a0e-8109-ff5e630e17d1. Click here for details
     Name: 'Bengaluru-to-US-Check'
     Enabled: true
     Frequency: 300
