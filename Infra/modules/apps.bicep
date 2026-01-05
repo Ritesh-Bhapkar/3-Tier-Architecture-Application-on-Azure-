@@ -198,7 +198,7 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
     'hidden-link:${appInsights.id}': 'Resource'
   })
   kind: 'standard'
-  properties: {The metric Requests specifies a dimension Status Code Category which was not found. Activity ID: a0e07a3c-7804-4a0e-8109-ff5e630e17d1. Click here for details
+  properties: {
     Name: 'Bengaluru-to-US-Check'
     Enabled: true
     Frequency: 300
@@ -246,7 +246,6 @@ resource reachabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     actions: [{ actionGroupId: actionGroupId }]
   }
 }
-
 
 resource dbConnectionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-db-connection-failure'
