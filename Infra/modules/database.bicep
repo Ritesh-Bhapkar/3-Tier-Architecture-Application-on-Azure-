@@ -65,7 +65,6 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
   }
 }
 
-// 4. Metric Alert (Updated for Read IOPS)
 resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'Postgres-Read-IOPS-Alert'
   location: 'global'
@@ -85,6 +84,62 @@ resource iopsAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricName: 'read_iops' 
           operator: 'GreaterThan'
           threshold: 1 
+          timeAggregation: 'Average'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroup.id }]
+  }
+}
+
+resource storageAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'Postgres-Storage-Percent-Alert'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'Alert when Database storage usage exceeds 10%'
+    scopes: [ psql.id ]
+    severity: 2
+    enabled: true
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'HighStoragePercent'
+          metricName: 'storage_percent' 
+          operator: 'GreaterThan'
+          threshold: 10 
+          timeAggregation: 'Average'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: actionGroup.id }]
+  }
+}
+
+resource cpuAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'Postgres-CPU-Percent-Alert'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'Alert when Database CPU usage exceeds 80%'
+    scopes: [ psql.id ]
+    severity: 2
+    enabled: true
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'HighCPUPercent'
+          metricName: 'cpu_percent' 
+          operator: 'GreaterThan'
+          threshold: 80 
           timeAggregation: 'Average'
           criterionType: 'StaticThresholdCriterion'
         }
