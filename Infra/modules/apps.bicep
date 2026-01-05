@@ -126,7 +126,7 @@ resource apiErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           operator: 'GreaterThan'
           threshold: 5
           timeAggregation: 'Total'
-          dimensions: [{ name: 'StatusCode', operator: 'Include', values: [ '5xx' ] }]
+          dimensions: [{ name: 'Status Code Category', operator: 'Include', values: [ '5xx' ] }]
           criterionType: 'StaticThresholdCriterion'
         }
       ]
