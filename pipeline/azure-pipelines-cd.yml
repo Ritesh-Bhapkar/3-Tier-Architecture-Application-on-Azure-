@@ -4,8 +4,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  azureServiceConnection: 'gbp-sc-ritesh'
-  resourceGroupName: 'gbp-devops-ritesh'
+  azureServiceConnection: 'ritesh'
+  resourceGroupName: 'ritesh'
   acrName: 'acr3tierfylxnlaj2ey4a'
   imageTag: 'latest' 
 
