@@ -11,7 +11,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  azureServiceConnection: 'gbp-sc-ritesh'
+  azureServiceConnection: 'ritesh'
   acrName: 'acr3tierfylxnlaj2ey4a'
   acrLoginServer: 'acr3tierfylxnlaj2ey4a.azurecr.io'
   backendImage: 'todo-backend'
