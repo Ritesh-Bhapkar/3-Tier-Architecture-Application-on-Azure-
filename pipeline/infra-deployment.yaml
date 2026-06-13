@@ -11,8 +11,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  azureServiceConnection: 'gbp-sc-ritesh'
-  resourceGroupName: 'gbp-devops-ritesh'
+  azureServiceConnection: 'ritesh'
+  resourceGroupName: 'ritesh'
   location: 'eastus'
   templateFile: 'Infra/main.bicep'
   # Make sure these are defined in your Pipeline Library/Variables!
