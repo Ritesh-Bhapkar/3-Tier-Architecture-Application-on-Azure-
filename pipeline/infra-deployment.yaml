@@ -12,13 +12,9 @@ pool:
 
 variables:
   azureServiceConnection: 'ritesh'
-  resourceGroupName: 'ritesh'
+  resourceGroupName: 'ritesh-RG'
   location: 'eastus'
   templateFile: 'Infra/main.bicep'
-  # Make sure these are defined in your Pipeline Library/Variables!
-  # dbUser: 'psqladmin'
-  # dbPassword: 'your_secret_password'
-  # acrPassword: 'your_acr_secret'
 
 stages:
 - stage: DeployInfrastructure
